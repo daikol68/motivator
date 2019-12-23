@@ -1,2 +1,3 @@
 # Project exclude paths
 /motivator-service/target/
+/motivator-service-rpm/target/
