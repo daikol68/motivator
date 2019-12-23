@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>motivator-service-rpm</artifactId>
+    <packaging>rpm</packaging>
+    <name>Motivator Service RPM</name>
+
+    <parent>
+        <groupId>de.daikol</groupId>
+        <artifactId>motivator</artifactId>
+        <version>1.0.3</version>
+    </parent>
+
+    <properties>
+        <rpm.name>${project.parent.artifactId}</rpm.name>
+        <rpm.version>${project.parent.version}</rpm.version>
+
+        <rpm.group>motivator</rpm.group>
+        <rpm.user>motivator</rpm.user>
+        <rpm.gid>506</rpm.gid>
+        <rpm.uid>506</rpm.uid>
+        <rpm.home>/home/${rpm.user}</rpm.home>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>de.daikol</groupId>
+            <artifactId>motivator-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <!-- Dieses Plugin erzeugt das RPM. -->
+            <!-- Hinweis: es kann nur auf solchen Systemen ausgeführt werden, die den RPM/RPMBuild installiert haben. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>rpm-maven-plugin</artifactId>
+                <version>2.2.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>rpm</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <repackJars>false</repackJars>
+                    <mappings>
+                        <mapping>
+                            <directory>/etc/init.d</directory>
+                            <username>root</username>
+                            <groupname>root</groupname>
+                            <directoryIncluded>false</directoryIncluded>
+                            <filemode>0744</filemode>
+                            <sources>
+                                <softlinkSource>
+                                    <destination>${rpm.name}</destination>
+                                    <location>${rpm.home}/motivator-service-${project.version}.jar</location>
+                                </softlinkSource>
+                            </sources>
+                        </mapping>
+                        <mapping>
+                            <directory>${rpm.home}</directory>
+                            <username>${rpm.user}</username>
+                            <groupname>${rpm.group}</groupname>
+                            <filemode>0744</filemode>
+                            <dependency>
+                                <includes>
+                                    <include>de.daikol:motivator-service</include>
+                                </includes>
+                            </dependency>
+                        </mapping>
+                    </mappings>
+                    <preinstallScriptlet>
+                        <script>
+                            <![CDATA[
+    if [ "$1" = "1" ]; then
+        echo "Beginne mit der Installation von %{name} %{version}-%{release}."
+        echo ""
+
+        echo "Prüfe ob die Gruppe '${rpm.group}' bereits existiert."
+        cat /etc/group | cut -d":" -f1 | grep ${rpm.group} 2>&1 > /dev/null
+        if [ $? -eq 0 ]; then
+            echo "Die Gruppe '${rpm.group}' konnte gefunden werden und wird nicht erneut angelegt."
+        else
+            echo "Es existiert noch keine Gruppe '${rpm.group}'... Diese wird nun angelegt."
+
+            groupadd -g ${rpm.gid} -r ${rpm.group} 2>&1 > /dev/null
+            if [ $? -ne 0 ]; then
+                echo "Konnte die Gruppe '${rpm.group}' nicht anlegen... breche ab."
+            fi
+        fi
+        echo ""
+
+        echo "Prüfe ob der User '${rpm.user}' bereits existiert."
+        cat /etc/passwd | cut -d":" -f1 | grep ${rpm.user} 2>&1 > /dev/null
+        if [ $? -eq 0 ]; then
+            echo "Der User '${rpm.user}' konnte gefunden werden und wird nicht erneut angelegt."
+        else
+            echo "Es existiert noch kein User '${rpm.user}'... Dieser wird nun angelegt."
+
+            useradd -m -g ${rpm.gid} -u ${rpm.uid} -s /bin/bash -r ${rpm.user} 2>&1 > /dev/null
+            if [ $? -ne 0 ]; then
+                echo "Konnte den User '${rpm.user}' nicht anlegen... breche ab."
+            fi
+        fi
+        echo ""
+    fi
+
+    if [ "$1" = "2" ]; then
+        echo "Beginne mit dem Update von %{name} auf Version %{version}-%{release}."
+        echo ""
+        echo "Stoppe Service falls einer läuft."
+        service ${rpm.name} stop
+        echo ""
+    fi
+]]>
+                        </script>
+                    </preinstallScriptlet>
+                    <postinstallScriptlet>
+                        <script>
+                            <![CDATA[
+    if [ "$1" = "1" ]; then
+        echo "${rpm.name} wird als Service hinzugefügt."
+        systemctl enable ${rpm.name}
+        chkconfig --add ${rpm.name}
+        echo ""
+        echo "${rpm.name} wird gestartet."
+        service ${rpm.name} start
+        echo "Die Installation von %{name} %{version}-%{release} ist abgeschlossen."
+        echo ""
+    fi
+
+    if [ "$1" = "2" ]; then
+        echo "Das Update von %{name} auf Version %{version}-%{release} ist abgeschlossen."
+        echo ""
+    fi
+]]>
+                        </script>
+                    </postinstallScriptlet>
+
+                    <preremoveScriptlet>
+                        <script>
+                            <![CDATA[
+    if [ "$1" = "0" ]; then
+        echo "Beginne mit der Deinstallation von %{name} %{version}-%{release}."
+        echo ""
+        echo "Beende ${rpm.name} falls eine Instanz läuft."
+        service ${rpm.name} stop
+        echo ""
+        echo "${rpm.name} wird als Service entfernt."
+        chkconfig --del ${rpm.name}
+        systemctl disable ${rpm.name}
+        echo ""
+        echo "Entferne nun die Dateien der alten Version von %{name}."
+        echo ""
+    fi
+]]>
+                        </script>
+                    </preremoveScriptlet>
+                    <postremoveScriptlet>
+                        <script>
+                            <![CDATA[
+    if [ "$1" = "1" ]; then
+        echo "Das entfernen der alten Dateien von %{name} ist abgeschlossen."
+        echo ""
+    else
+        echo "Die Deinstallation von %{name} %{version}-%{release} ist abgeschlossen."
+        echo ""
+    fi
+]]>
+                        </script>
+                    </postremoveScriptlet>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
