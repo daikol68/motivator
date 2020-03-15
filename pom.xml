@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.daikol</groupId>
     <artifactId>motivator</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.3-SNAPSHOT</version>
     <name>Motivator</name>
     <description>Hierbei handelt es sich um das Projekt um das Backend für den Motivator zu erstellen.</description>
     <packaging>pom</packaging>

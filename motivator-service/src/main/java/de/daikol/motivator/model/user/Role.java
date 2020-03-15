@@ -31,7 +31,7 @@ public class Role implements Serializable {
     @Column(name = "TYPE", nullable = false)
     @Enumerated(EnumType.STRING)
     @XmlElement
-    private Type type;
+    private RoleType type;
 
     public long getId() {
         return id;
@@ -41,23 +41,11 @@ public class Role implements Serializable {
         this.id = id;
     }
 
-    public Type getType() {
+    public RoleType getType() {
         return type;
     }
 
-    public void setType(Type type) {
+    public void setType(RoleType type) {
         this.type = type;
     }
-
-    public enum Type {
-        /**
-         * The admin user.
-         */
-        ADMIN,
-        /**
-         * The user.
-         */
-        USER;
-    }
-
 }

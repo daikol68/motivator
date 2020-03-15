@@ -2,6 +2,7 @@ package de.daikol.motivator.controller;
 
 import de.daikol.motivator.Messages;
 import de.daikol.motivator.model.*;
+import de.daikol.motivator.model.user.RoleType;
 import de.daikol.motivator.model.user.User;
 import de.daikol.motivator.repository.CompetitionRepository;
 import de.daikol.motivator.repository.CompetitorRepository;
@@ -44,23 +45,26 @@ public class CompetitionController {
 
         final User user = userController.getAuthenticatedUser();
 
-        boolean userContained = false;
-        for (Competitor competitor : competition.getCompetitors()) {
-            if (user.getId() == competitor.getUser().getId()) {
-                userContained = true;
+        Iterator<Competitor> iterator = competition.getCompetitors().iterator();
+
+        while (iterator.hasNext()) {
+            Competitor competitor = iterator.next();
+            if (competitor.getId() == user.getId()) {
+                competitor.setCompetition(competition);
+                competitor.setRole(RoleType.USER);
+                iterator.remove();
             }
-            competitor.setCompetition(competition);
-            competitor.setStatus(CompetitionStatus.CONFIRMED);
         }
 
-        if (!userContained) {
-            Competitor competitor = new Competitor();
-            competitor.setPoints(0);
-            competitor.setStatus(CompetitionStatus.CONFIRMED);
-            competitor.setCompetition(competition);
-            competitor.setUser(user);
-            competition.getCompetitors().add(competitor);
-        }
+        Competitor competitor = new Competitor();
+        competitor.setPoints(0);
+        competitor.setStatus(CompetitionStatus.CONFIRMED);
+        competitor.setCompetition(competition);
+        competitor.setUser(user);
+        competitor.setRole(RoleType.ADMIN);
+        competitor.setStatus(CompetitionStatus.CONFIRMED);
+
+        competition.getCompetitors().add(competitor);
 
         for (Achievement achievement : competition.getAchievements()) {
             achievement.setStatus(AchievementStatus.OPEN);
@@ -94,7 +98,6 @@ public class CompetitionController {
 
         // read news
         Competition loaded = optional.get();
-
 
         boolean userContained = false;
         for (Competitor competitor : loaded.getCompetitors()) {
@@ -170,17 +173,12 @@ public class CompetitionController {
         Optional<Competition> optional = competitionRepository.findById(competition.getId());
 
         if (!optional.isPresent()) {
-            throw new IllegalArgumentException("Wettbewerb: " + competition.getId() + " konnte nicht gefunden werden!");
+            throw new IllegalArgumentException(Messages.ENTITY_NOT_FOUND_BY_ID);
         }
 
         Competition loaded = optional.get();
 
-        boolean userContained = false;
-        for (Competitor competitor : loaded.getCompetitors()) {
-            if (user.getId() == competitor.getUser().getId()) {
-                userContained = true;
-            }
-        }
+        boolean userContained = isUserCompetitor(user, loaded);
 
         if (!userContained) {
             throw new IllegalArgumentException(Messages.USER_NOT_IN_COMPETITION);
@@ -195,6 +193,7 @@ public class CompetitionController {
             Competitor loadedCompetitor = getCompetitor(loadedCompetitors, competitor);
             if (loadedCompetitor != null) {
                 loadedCompetitor.setPoints(competitor.getPoints());
+                loadedCompetitor.setRole(competitor.getRole());
                 loaded.getCompetitors().add(loadedCompetitor);
                 loadedCompetitors.remove(loadedCompetitor);
             } else {
@@ -317,12 +316,7 @@ public class CompetitionController {
         }
         Competition competition = optionalCompetition.get();
 
-        boolean userContained = false;
-        for (Competitor competitor : competition.getCompetitors()) {
-            if (user.getId() == competitor.getUser().getId()) {
-                userContained = true;
-            }
-        }
+        boolean userContained = isUserCompetitor(user, competition);
 
         if (!userContained) {
             throw new IllegalArgumentException(Messages.USER_NOT_IN_COMPETITION);
@@ -349,12 +343,7 @@ public class CompetitionController {
         }
         Competition competition = optionalCompetition.get();
 
-        boolean userContained = false;
-        for (Competitor competitor : competition.getCompetitors()) {
-            if (user.getId() == competitor.getUser().getId()) {
-                userContained = true;
-            }
-        }
+        boolean userContained = isUserCompetitor(user, competition);
 
         if (!userContained) {
             throw new IllegalArgumentException(Messages.USER_NOT_IN_COMPETITION);
@@ -388,12 +377,7 @@ public class CompetitionController {
         }
         Competition competition = optionalCompetition.get();
 
-        boolean userContained = false;
-        for (Competitor competitor : competition.getCompetitors()) {
-            if (user.getId() == competitor.getUser().getId()) {
-                userContained = true;
-            }
-        }
+        boolean userContained = isUserCompetitor(user, competition);
 
         if (!userContained) {
             throw new IllegalArgumentException(Messages.USER_NOT_IN_COMPETITION);
@@ -427,12 +411,7 @@ public class CompetitionController {
         }
         Competition competition = optionalCompetition.get();
 
-        boolean userContained = false;
-        for (Competitor competitor : competition.getCompetitors()) {
-            if (user.getId() == competitor.getUser().getId()) {
-                userContained = true;
-            }
-        }
+        boolean userContained = isUserCompetitor(user, competition);
 
         if (!userContained) {
             throw new IllegalArgumentException(Messages.USER_NOT_IN_COMPETITION);
@@ -488,6 +467,20 @@ public class CompetitionController {
         messageController.createCompetitionMessage(user, competition, text, messageType);
 
         return true;
+    }
+
+    private boolean isUserCompetitor(User user, Competition competition) {
+        boolean userContained = false;
+        for (Competitor competitor : competition.getCompetitors()) {
+            if (user.getId() == competitor.getUser().getId()) {
+                userContained = true;
+
+                if (competitor.getRole() != RoleType.ADMIN) {
+                    throw new IllegalArgumentException(Messages.COMPETITION_CHANGE_NOT_ALLOWED);
+                }
+            }
+        }
+        return userContained;
     }
 
     private Competitor getCompetitor(ArrayList<Competitor> competitors, Competitor competitor) {

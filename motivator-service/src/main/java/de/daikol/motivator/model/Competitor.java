@@ -1,5 +1,6 @@
 package de.daikol.motivator.model;
 
+import de.daikol.motivator.model.user.RoleType;
 import de.daikol.motivator.model.user.User;
 
 import javax.persistence.*;
@@ -24,6 +25,11 @@ public class Competitor {
     @Column(name = "POINTS", nullable = false)
     @XmlElement
     private int points;
+
+    @Column(name = "ROLE", nullable = false)
+    @XmlElement
+    @Enumerated(EnumType.STRING)
+    private RoleType role;
 
     @Column(name = "STATUS", nullable = false)
     @XmlElement
@@ -52,6 +58,14 @@ public class Competitor {
 
     public void setPoints(int points) {
         this.points = points;
+    }
+
+    public RoleType getRole() {
+        return role;
+    }
+
+    public void setRole(RoleType role) {
+        this.role = role;
     }
 
     public CompetitionStatus getStatus() {

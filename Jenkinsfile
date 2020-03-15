@@ -4,6 +4,9 @@ pipeline {
     branch = 'master'
     scmUrl = 'https://github.com/daikol68/motivator'
   }
+  options {
+        buildDiscarder(logRotator(numToKeepStr: '3'))
+  }
   stages {
     stage('checkout git') {
       steps {
@@ -13,7 +16,7 @@ pipeline {
 
     stage('deploy'){
       steps {
-        sh 'mvn clean deploy'
+        sh 'mvn clean deploy -DrepositoryId=daikol'
       }
     }
   }

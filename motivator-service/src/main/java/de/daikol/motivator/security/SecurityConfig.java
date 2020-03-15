@@ -1,6 +1,7 @@
 package de.daikol.motivator.security;
 
 import de.daikol.motivator.model.user.Role;
+import de.daikol.motivator.model.user.RoleType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -48,7 +49,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // allow all POST requests
                 .antMatchers(jwtConfig.getUri()).permitAll()
                 .antMatchers("/registration/**").permitAll()
-                .antMatchers("/competition/**" + "/message/**" + "/progress/**" + "/user/**").hasRole(Role.Type.USER.toString())
+                .antMatchers("/competition/**" + "/message/**" + "/progress/**" + "/user/**").hasRole(RoleType.USER.toString())
 
                 // any other requests must be authenticated
                 .anyRequest().authenticated();

@@ -2,6 +2,8 @@ package de.daikol.motivator;
 
 public interface Messages {
 
+    String COMPETITION_CHANGE_NOT_ALLOWED = "Diese Änderung ist nur für einen Admin zugelassen!";
+
     String ENTITY_NOT_FOUND_BY_ID = "Das Objekt mit der angegebenen ID konnte nicht gefunden werden!";
 
     String PROGRESS_APPLY_NOT_ALLOWED = "Nur Teilnehmer des Wettbewerbs dürfen Fortschritt bearbeiten!";

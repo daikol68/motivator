@@ -5,6 +5,7 @@ import de.daikol.motivator.Messages;
 import de.daikol.motivator.exception.NotFoundException;
 import de.daikol.motivator.model.Message;
 import de.daikol.motivator.model.user.Role;
+import de.daikol.motivator.model.user.RoleType;
 import de.daikol.motivator.model.user.User;
 import de.daikol.motivator.repository.MessageRepository;
 import de.daikol.motivator.repository.RoleRepository;
@@ -78,7 +79,7 @@ public class RegistrationController {
 
         user.setRegistration(true);
         Role role = new Role();
-        role.setType(Role.Type.USER);
+        role.setType(RoleType.USER);
 
         List<Role> roles = new ArrayList<>();
         roles.add(role);
