@@ -15,7 +15,7 @@
     <properties>
         <spring.version>2.1.1.RELEASE</spring.version>
         <postgre.version>42.2.5</postgre.version>
-        <h2.version>1.4.197</h2.version>
+        <h2.version>2.1.210</h2.version>
         <mail.version>1.6.2</mail.version>
         <lang3.version>3.8.1</lang3.version>
         <jjwt.version>0.9.1</jjwt.version>
